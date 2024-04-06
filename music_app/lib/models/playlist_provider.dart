@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:music_app/models/song.dart';
 
 class PlaylistProvider extends ChangeNotifier {
-  // playlist of songs
   final List<Song> _playlist = [
     //Song 1
     const Song(
@@ -104,26 +104,119 @@ class PlaylistProvider extends ChangeNotifier {
     ),
   ];
 
-  // Currently playing song
   int? _currentSongIndex;
+  late AudioPlayer _audioPlayer;
 
-  /*
-  
-    G E T T E R S
+  Duration _currentDuration = Duration.zero;
+  Duration _totalDuration = Duration.zero;
 
-   */
+  PlaylistProvider() {
+    _currentSongIndex = 0;
+    _audioPlayer = AudioPlayer();
+    listenToDuration();
+  }
+
+  bool _isplaying = false;
+
+  Future<void> play() async {
+    final String path = _playlist[_currentSongIndex!].audioPath;
+    await _audioPlayer.setAudioSource(
+      AudioSource.uri(Uri.parse('asset:///$path')),
+    );
+    await _audioPlayer.play();
+    _isplaying = true;
+    notifyListeners();
+  }
+
+  void pause() {
+    _audioPlayer.pause();
+    _isplaying = false;
+    notifyListeners();
+  }
+
+  void resume() {
+    _audioPlayer.play();
+    _isplaying = true;
+    notifyListeners();
+  }
+
+  void pauseOrResume() {
+    if (_isplaying) {
+      pause();
+    } else {
+      resume();
+    }
+    notifyListeners();
+  }
+
+  void seek(Duration position) {
+    _audioPlayer.seek(position);
+  }
+
+void playNextSong() {
+    if (_currentSongIndex != null) {
+      if (_currentSongIndex! < _playlist.length - 1) {
+        _currentSongIndex = _currentSongIndex! + 1;
+      } else {
+        _currentSongIndex = 0;
+      }
+      play();
+    }
+  }
+
+  void playPreviousSong() {
+    if (_currentSongIndex != null) {
+      if (_currentDuration.inSeconds > 2) {
+        seek(Duration.zero);
+      } else {
+        if (_currentSongIndex! > 0) {
+          _currentSongIndex = _currentSongIndex! - 1;
+        } else {
+          _currentSongIndex = _playlist.length - 1;
+        }
+        play();
+      }
+    }
+  }
+
+  void listenToDuration() {
+    _audioPlayer.durationStream.listen((newDuration) {
+      _totalDuration = newDuration ?? Duration.zero;
+      notifyListeners();
+    });
+
+    _audioPlayer.positionStream.listen((newPosition) {
+      _currentDuration = newPosition;
+      notifyListeners();
+    });
+
+    _audioPlayer.playerStateStream.listen((playerState) {
+      if (playerState.playing) {
+        _isplaying = true;
+      } else {
+        _isplaying = false;
+      }
+      notifyListeners();
+    });
+
+    _audioPlayer.playerStateStream.listen((playerState) {
+      if (playerState.processingState == ProcessingState.completed) {
+        playNextSong();
+      }
+    });
+  }
 
   List<Song> get playlist => _playlist;
   int? get currentSongIndex => _currentSongIndex;
+  bool get isplaying => _isplaying;
+  Duration get currentDuration => _currentDuration;
+  Duration get totalDuration => _totalDuration;
 
-  /*
-  
-    S E T T E R S
-
-   */
-
-  set setCurrentSongIndex(int? newIndex){
+  set setCurrentSongIndex(int? newIndex) {
     _currentSongIndex = newIndex;
+    if (newIndex != null) {
+      play();
+    }
     notifyListeners();
   }
 }

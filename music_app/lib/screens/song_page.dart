@@ -6,6 +6,14 @@ import 'package:music_app/widgets/neu_box.dart';
 class SongPage extends StatelessWidget {
   const SongPage({Key? key}) : super(key: key);
 
+  String formatTime(Duration duration) {
+    String twoDigitSeconds =
+        duration.inSeconds.remainder(60).toString().padLeft(2, '0');
+    String formattedTime = '${duration.inMinutes}:$twoDigitSeconds';
+
+    return formattedTime;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<PlaylistProvider>(
@@ -43,7 +51,7 @@ class SongPage extends StatelessWidget {
                           child: Image.asset(currentSong.albumArtImagePath),
                         ),
                         Padding(
-                          padding: EdgeInsets.all(15.0),
+                          padding: const EdgeInsets.all(15.0),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -51,13 +59,13 @@ class SongPage extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(currentSong.songName,
-                                      style: TextStyle(
+                                      style: const TextStyle(
                                           fontSize: 20,
                                           fontWeight: FontWeight.bold)),
                                   Text(currentSong.artistName),
                                 ],
                               ),
-                              Icon(
+                              const Icon(
                                 Icons.favorite,
                                 color: Colors.red,
                               ),
@@ -70,15 +78,15 @@ class SongPage extends StatelessWidget {
                   const SizedBox(height: 25),
                   Column(
                     children: [
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 25.0),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 25.0),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text("0:00"),
-                            Icon(Icons.shuffle),
-                            Icon(Icons.repeat),
-                            Text("0:00"),
+                            Text(formatTime(value.currentDuration)),
+                            const Icon(Icons.shuffle),
+                            const Icon(Icons.repeat),
+                            Text(formatTime(value.totalDuration)),
                           ],
                         ),
                       ),
@@ -89,12 +97,13 @@ class SongPage extends StatelessWidget {
                         ),
                         child: Slider(
                           min: 0,
-                          max: 100,
-                          value: 50,
-                          onChanged: (value) {
-                            // Handle slider value change here
-                          },
+                          max: value.totalDuration.inSeconds.toDouble(),
+                          value: value.currentDuration.inSeconds.toDouble(),
+                          onChanged: (double) {},
                           activeColor: Colors.green,
+                          onChangeEnd: (double) {
+                            value.seek(Duration(seconds: double.toInt()));
+                          },
                         ),
                       )
                     ],
@@ -105,8 +114,8 @@ class SongPage extends StatelessWidget {
                     children: [
                       Expanded(
                         child: GestureDetector(
-                          onTap: () => {},
-                          child: NeuBox(
+                          onTap: value.playPreviousSong,
+                          child: const NeuBox(
                             child: Icon(Icons.skip_previous),
                           ),
                         ),
@@ -117,9 +126,11 @@ class SongPage extends StatelessWidget {
                       Expanded(
                         flex: 2,
                         child: GestureDetector(
-                          onTap: () => {},
+                          onTap: value.pauseOrResume,
                           child: NeuBox(
-                            child: Icon(Icons.play_arrow),
+                            child: Icon(value.isplaying
+                                ? Icons.pause
+                                : Icons.play_arrow),
                           ),
                         ),
                       ),
@@ -128,8 +139,8 @@ class SongPage extends StatelessWidget {
                       ),
                       Expanded(
                         child: GestureDetector(
-                          onTap: () => {},
-                          child: NeuBox(
+                          onTap: value.playNextSong,
+                          child: const NeuBox(
                             child: Icon(Icons.skip_next),
                           ),
                         ),

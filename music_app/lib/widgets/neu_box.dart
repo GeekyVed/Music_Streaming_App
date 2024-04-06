@@ -23,13 +23,13 @@ class NeuBox extends StatelessWidget {
             ),
 
             // lighter shadow on top left
-            BoxShadow(
+            const BoxShadow(
               color: Colors.white,
               blurRadius: 15,
               offset: const Offset(-4, -4),
             ),
           ]),
-          padding: EdgeInsets.all(12),
+      padding: EdgeInsets.all(12),
       child: child,
     );
   }
